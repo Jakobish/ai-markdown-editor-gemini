@@ -19,7 +19,15 @@
     "@codemirror/language-data": "^6.5.1",
     "@uiw/codemirror-theme-darcula": "^4.25.2",
     "@codemirror/lang-markdown": "^6.4.0",
-    "@uiw/codemirror-theme-bbedit": "^4.25.2"
+    "@uiw/codemirror-theme-bbedit": "^4.25.2",
+    "@codemirror/view": "^6.38.4",
+    "@tiptap/react": "2.5.7",
+    "@tiptap/starter-kit": "2.5.7",
+    "@tiptap/extension-markdown": "2.5.7",
+    "prosemirror-state": "1.4.3",
+    "prosemirror-view": "1.33.6",
+    "prosemirror-model": "1.22.0",
+    "prosemirror-transform": "1.8.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

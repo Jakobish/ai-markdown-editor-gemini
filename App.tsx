@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
-import { File } from './types';
+import { File, EditorMode } from './types';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { DEFAULT_FILE_CONTENT, LOCAL_STORAGE_FILES_KEY } from './constants';
 import Header from './components/Header';
@@ -15,6 +14,7 @@ const App: React.FC = () => {
   const [activeFileId, setActiveFileId] = useState<string | null>(null);
   const [selectedText, setSelectedText] = useState<string>('');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [editorMode, setEditorMode] = useState<EditorMode>('source');
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
@@ -66,9 +66,11 @@ const App: React.FC = () => {
   
   const handleContentChange = useCallback((content: string) => {
     if (activeFileId) {
-      setFiles(files.map(f => f.id === activeFileId ? {...f, content} : f));
+        setFiles(currentFiles => 
+            currentFiles.map(f => f.id === activeFileId ? {...f, content} : f)
+        );
     }
-  }, [activeFileId, files, setFiles]);
+  }, [activeFileId, setFiles]);
 
   const handleApplyAiEdit = (newText: string) => {
     if (!activeFile || !selectedText) return;
@@ -118,6 +120,8 @@ const App: React.FC = () => {
               onContentChange={handleContentChange}
               onSelectionChange={setSelectedText}
               theme={theme}
+              editorMode={editorMode}
+              onEditorModeChange={setEditorMode}
             />
           ) : (
             <div className="flex-1 flex items-center justify-center text-gray-500">

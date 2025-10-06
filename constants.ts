@@ -12,7 +12,7 @@ This is a browser-based Markdown editor with an integrated AI chat panel.
 
 ## AI Workflow
 
-1.  **Open Settings**: Click the gear icon in the top right to add your Google Gemini API key.
+1.  **AI is Ready**: The AI assistant is configured and ready to use. You can view the AI provider details in the settings (gear icon).
 2.  **Select Text**: Highlight any text in this editor.
 3.  **Chat with AI**: Ask the AI to modify it. For example, type "summarize this" or "fix grammar".
 4.  **Apply Changes**: The AI's response will appear in the chat. You can then apply the changes to your document.

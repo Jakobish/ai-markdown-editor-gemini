@@ -1,10 +1,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ChatMessage, Settings } from '../types';
+import { ChatMessage } from '../types';
 import { generateContentWithAi } from '../services/geminiService';
 import { SendIcon, SparklesIcon } from './icons';
-import { useLocalStorage } from '../hooks/useLocalStorage';
-import { LOCAL_STORAGE_SETTINGS_KEY } from '../constants';
 
 interface AiAssistantProps {
   selectedText: string;
@@ -20,10 +18,7 @@ const AiAssistant: React.FC<AiAssistantProps> = ({
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [settings] = useLocalStorage<Settings>(LOCAL_STORAGE_SETTINGS_KEY, {
-    apiKey: '',
-    provider: 'gemini',
-  });
+  // FIX: Per coding guidelines, API key is handled by the service via environment variables, so settings are no longer needed here.
   const [lastAiResponse, setLastAiResponse] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -38,18 +33,7 @@ const AiAssistant: React.FC<AiAssistantProps> = ({
     e.preventDefault();
     if (isLoading || !input.trim()) return;
 
-    if (!settings.apiKey) {
-      setMessages([
-        ...messages,
-        { role: 'user', content: input },
-        {
-          role: 'system',
-          content: 'API key not found. Please set your Gemini API key in the settings.',
-        },
-      ]);
-      return;
-    }
-
+    // FIX: Per coding guidelines, API key is handled by the service. UI checks are removed.
     const userMessage: ChatMessage = { role: 'user', content: input };
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
@@ -61,7 +45,8 @@ const AiAssistant: React.FC<AiAssistantProps> = ({
       : input;
 
     try {
-      const response = await generateContentWithAi(settings.apiKey, prompt);
+      // FIX: Call to generateContentWithAi updated to not pass API key.
+      const response = await generateContentWithAi(prompt);
       const modelMessage: ChatMessage = { role: 'model', content: response };
       setMessages((prev) => [...prev, modelMessage]);
       if (selectedText) {
@@ -157,11 +142,7 @@ const AiAssistant: React.FC<AiAssistantProps> = ({
             <SendIcon className="w-5 h-5" />
           </button>
         </form>
-        {!settings.apiKey && (
-            <p className="text-xs text-amber-400 mt-2 text-center">
-                API key not set. Please <button onClick={onShowSettings} className="underline hover:text-amber-300">configure it</button>.
-            </p>
-        )}
+        {/* FIX: Removed prompt to set API key in settings, as it's now handled by environment variables. */}
       </div>
     </div>
   );
