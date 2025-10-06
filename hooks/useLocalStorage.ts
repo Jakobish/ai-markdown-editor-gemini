@@ -1,5 +1,4 @@
 
-
 // FIX: Import `React` to make the React namespace available for types.
 import React, { useState, useEffect } from 'react';
 
@@ -16,11 +15,9 @@ export function useLocalStorage<T,>(key: string, initialValue: T): [T, React.Dis
 
   useEffect(() => {
     try {
-      const valueToStore =
-        typeof storedValue === 'function'
-          ? storedValue(storedValue)
-          : storedValue;
-      window.localStorage.setItem(key, JSON.stringify(valueToStore));
+      // The value from useState is the state itself, not an updater function.
+      // We can directly stringify it.
+      window.localStorage.setItem(key, JSON.stringify(storedValue));
     } catch (error) {
       console.error(error);
     }
