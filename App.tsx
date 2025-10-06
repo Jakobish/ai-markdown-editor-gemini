@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { File, EditorMode, Selection } from './types';
 import { useLocalStorage } from './hooks/useLocalStorage';
@@ -75,10 +74,11 @@ const App: React.FC = () => {
     }
   }, [activeFileId, setFiles]);
 
-  const handleApplyAiEdit = (newText: string) => {
-    if (!activeFile || !selection) return;
-    setPendingReplacement({ text: newText, selection });
-    setSelection(null);
+  const handleApplyAiEdit = (newText: string, selectionToReplace: Selection) => {
+    if (!activeFile) return;
+    // Use the selection that was sent to the AI, not the current one
+    setPendingReplacement({ text: newText, selection: selectionToReplace });
+    setSelection(null); // Clear current visual selection
   };
 
   const handleExport = () => {

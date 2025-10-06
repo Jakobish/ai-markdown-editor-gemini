@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { SettingsIcon, SunIcon, MoonIcon, DownloadIcon } from './icons';
 
@@ -22,10 +21,9 @@ const Header: React.FC<HeaderProps> = ({ theme, onToggleTheme, onShowSettings, o
         <span className="font-semibold text-white">AI Markdown Editor /</span>
         <span className="ml-2 text-gray-400">{activeFileName}</span>
       </div>
-      <div className="flex items-center space-x-2">
-         <div className="flex items-center space-x-2 bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-sm">
-            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-            <span className="text-gray-400">Saved Locally</span>
+      <div className="flex items-center space-x-4">
+         <div className="text-sm text-gray-400">
+            Saved to browser
         </div>
         <button onClick={onExport} className="p-2 rounded-md hover:bg-gray-800" aria-label="Export file">
           <DownloadIcon className="w-5 h-5" />

@@ -1,13 +1,28 @@
-
 import { GoogleGenAI } from "@google/genai";
 
-// FIX: Per coding guidelines, initialize GoogleGenAI with API key from environment variables.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+let ai: GoogleGenAI | null = null;
+let initError: string | null = null;
+
+try {
+  // Per coding guidelines, the API key must come from process.env.API_KEY.
+  // A missing key would crash the app, so we handle it gracefully.
+  if (!process.env.API_KEY) {
+    throw new Error("API_KEY environment variable not set. Please configure it to use the AI Assistant.");
+  }
+  ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+} catch (error) {
+  console.error("Failed to initialize GoogleGenAI:", error);
+  initError = error instanceof Error ? error.message : "An unknown error occurred during AI initialization.";
+}
+
 
 export async function generateContentWithAi(
   prompt: string
 ): Promise<string> {
-  // FIX: API key is now handled by the GoogleGenAI instance.
+  if (initError || !ai) {
+    return `Error: AI service is not available. ${initError || ''}`.trim();
+  }
+  
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',

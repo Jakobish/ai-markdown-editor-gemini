@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { ChatMessage, Selection } from '../types';
 import { generateContentWithAi } from '../services/geminiService';
@@ -6,7 +5,7 @@ import { SendIcon, SparklesIcon } from './icons';
 
 interface AiAssistantProps {
   selection: Selection | null;
-  onApplyEdit: (newText: string) => void;
+  onApplyEdit: (newText: string, selection: Selection) => void;
   onShowSettings: () => void;
 }
 
@@ -18,7 +17,7 @@ const AiAssistant: React.FC<AiAssistantProps> = ({
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [lastAiResponse, setLastAiResponse] = useState<string | null>(null);
+  const [lastAiEdit, setLastAiEdit] = useState<{ text: string, selection: Selection } | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -31,24 +30,28 @@ const AiAssistant: React.FC<AiAssistantProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isLoading || !input.trim()) return;
+    
+    // Capture selection at the time of request for stable replacements
+    const currentSelection = selection;
+    const isEditRequest = !!currentSelection;
 
-    const isEditRequest = !!selection;
     const userMessage: ChatMessage = { role: 'user', content: input };
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
-    setLastAiResponse(null);
+    setLastAiEdit(null); // Clear previous edit suggestion
 
-    const prompt = selection
-      ? `You are a markdown editing assistant. The user has selected the following text from their document:\n\n---\n${selection.text}\n---\n\nPlease apply the following instruction: "${input}"\n\nReturn only the modified markdown text, without any explanation, preamble, or markdown block syntax.`
+    const prompt = currentSelection
+      ? `You are a markdown editing assistant. The user has selected the following text from their document:\n\n---\n${currentSelection.text}\n---\n\nPlease apply the following instruction: "${input}"\n\nReturn only the modified markdown text, without any explanation, preamble, or markdown block syntax.`
       : input;
 
     try {
       const response = await generateContentWithAi(prompt);
       const modelMessage: ChatMessage = { role: 'model', content: response };
       setMessages((prev) => [...prev, modelMessage]);
-      if (isEditRequest) {
-        setLastAiResponse(response);
+      if (isEditRequest && currentSelection) {
+        // Associate the AI response with the specific selection it was for
+        setLastAiEdit({ text: response, selection: currentSelection });
       }
     } catch (error) {
       const errorMessage: ChatMessage = {
@@ -109,12 +112,12 @@ const AiAssistant: React.FC<AiAssistantProps> = ({
         <div ref={messagesEndRef} />
       </div>
 
-      {lastAiResponse && (
+      {lastAiEdit && (
         <div className="p-4 border-t border-gray-800">
             <button
                 onClick={() => {
-                    onApplyEdit(lastAiResponse);
-                    setLastAiResponse(null);
+                    onApplyEdit(lastAiEdit.text, lastAiEdit.selection);
+                    setLastAiEdit(null);
                 }}
                 className="w-full bg-green-600 hover:bg-green-700 text-white text-sm font-semibold py-2 px-4 rounded-md transition-colors"
             >
