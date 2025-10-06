@@ -1,24 +1,23 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ChatMessage } from '../types';
+import { ChatMessage, Selection } from '../types';
 import { generateContentWithAi } from '../services/geminiService';
 import { SendIcon, SparklesIcon } from './icons';
 
 interface AiAssistantProps {
-  selectedText: string;
+  selection: Selection | null;
   onApplyEdit: (newText: string) => void;
   onShowSettings: () => void;
 }
 
 const AiAssistant: React.FC<AiAssistantProps> = ({
-  selectedText,
+  selection,
   onApplyEdit,
   onShowSettings,
 }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  // FIX: Per coding guidelines, API key is handled by the service via environment variables, so settings are no longer needed here.
   const [lastAiResponse, setLastAiResponse] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -33,23 +32,22 @@ const AiAssistant: React.FC<AiAssistantProps> = ({
     e.preventDefault();
     if (isLoading || !input.trim()) return;
 
-    // FIX: Per coding guidelines, API key is handled by the service. UI checks are removed.
+    const isEditRequest = !!selection;
     const userMessage: ChatMessage = { role: 'user', content: input };
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
     setLastAiResponse(null);
 
-    const prompt = selectedText
-      ? `You are a markdown editing assistant. The user has selected the following text from their document:\n\n---\n${selectedText}\n---\n\nPlease apply the following instruction: "${input}"\n\nReturn only the modified markdown text, without any explanation, preamble, or markdown block syntax.`
+    const prompt = selection
+      ? `You are a markdown editing assistant. The user has selected the following text from their document:\n\n---\n${selection.text}\n---\n\nPlease apply the following instruction: "${input}"\n\nReturn only the modified markdown text, without any explanation, preamble, or markdown block syntax.`
       : input;
 
     try {
-      // FIX: Call to generateContentWithAi updated to not pass API key.
       const response = await generateContentWithAi(prompt);
       const modelMessage: ChatMessage = { role: 'model', content: response };
       setMessages((prev) => [...prev, modelMessage]);
-      if (selectedText) {
+      if (isEditRequest) {
         setLastAiResponse(response);
       }
     } catch (error) {
@@ -70,6 +68,13 @@ const AiAssistant: React.FC<AiAssistantProps> = ({
         <h2 className="text-sm font-bold text-gray-200">AI Assistant</h2>
       </div>
       <div className="flex-1 p-4 overflow-y-auto space-y-4">
+        {messages.length === 0 && !isLoading && (
+            <div className="text-center text-sm text-gray-500 flex flex-col items-center justify-center h-full">
+                <SparklesIcon className="w-10 h-10 mx-auto mb-3 text-gray-600" />
+                <p className="font-semibold">Your AI Assistant</p>
+                <p>Select text in your document to edit, or just ask me anything!</p>
+            </div>
+        )}
         {messages.map((msg, index) => (
           <div
             key={index}
@@ -107,19 +112,22 @@ const AiAssistant: React.FC<AiAssistantProps> = ({
       {lastAiResponse && (
         <div className="p-4 border-t border-gray-800">
             <button
-                onClick={() => onApplyEdit(lastAiResponse)}
-                className="w-full bg-green-600 hover:bg-green-700 text-white text-sm font-semibold py-2 px-4 rounded-md"
+                onClick={() => {
+                    onApplyEdit(lastAiResponse);
+                    setLastAiResponse(null);
+                }}
+                className="w-full bg-green-600 hover:bg-green-700 text-white text-sm font-semibold py-2 px-4 rounded-md transition-colors"
             >
                 Apply to Document
             </button>
         </div>
       )}
 
-      {selectedText && (
+      {selection && (
         <div className="p-2 border-t border-gray-800 text-xs text-gray-400">
           <p className="font-semibold mb-1">Editing selected text:</p>
           <p className="bg-gray-800 p-2 rounded-md truncate">
-            {selectedText}
+            {selection.text}
           </p>
         </div>
       )}
@@ -130,19 +138,18 @@ const AiAssistant: React.FC<AiAssistantProps> = ({
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder={selectedText ? "Instruct AI to edit..." : "Ask AI anything..."}
+            placeholder={selection ? "Instruct AI to edit..." : "Ask AI anything..."}
             className="flex-1 bg-gray-800 text-gray-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             disabled={isLoading}
           />
           <button
             type="submit"
             disabled={isLoading || !input.trim()}
-            className="ml-2 p-2 bg-blue-600 text-white rounded-lg disabled:bg-gray-600 disabled:cursor-not-allowed hover:bg-blue-700"
+            className="ml-2 p-2 bg-blue-600 text-white rounded-lg disabled:bg-gray-600 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors"
           >
             <SendIcon className="w-5 h-5" />
           </button>
         </form>
-        {/* FIX: Removed prompt to set API key in settings, as it's now handled by environment variables. */}
       </div>
     </div>
   );

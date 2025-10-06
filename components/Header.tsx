@@ -19,14 +19,13 @@ const Header: React.FC<HeaderProps> = ({ theme, onToggleTheme, onShowSettings, o
           <path d="M2 17L12 22L22 17" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           <path d="M2 12L12 17L22 12" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
-        <span className="font-semibold text-white">tst-proj /</span>
+        <span className="font-semibold text-white">AI Markdown Editor /</span>
         <span className="ml-2 text-gray-400">{activeFileName}</span>
       </div>
       <div className="flex items-center space-x-2">
          <div className="flex items-center space-x-2 bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-sm">
-            <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-            <span className="text-gray-400">Local Storage</span>
-            <button className="text-blue-400 hover:text-blue-300 text-xs font-semibold">Sign in to back up</button>
+            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+            <span className="text-gray-400">Saved Locally</span>
         </div>
         <button onClick={onExport} className="p-2 rounded-md hover:bg-gray-800" aria-label="Export file">
           <DownloadIcon className="w-5 h-5" />

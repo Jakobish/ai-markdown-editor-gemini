@@ -17,3 +17,10 @@ export interface Settings {
 }
 
 export type EditorMode = 'source' | 'wysiwyg';
+
+export interface Selection {
+  from: number;
+  to: number;
+  text: string;
+  mode: EditorMode;
+}

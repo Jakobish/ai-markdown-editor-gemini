@@ -1,5 +1,5 @@
 
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useEffect } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
 import type { ViewUpdate } from '@codemirror/view';
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
@@ -9,16 +9,18 @@ import { bbedit } from '@uiw/codemirror-theme-bbedit';
 import { darcula } from '@uiw/codemirror-theme-darcula';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { EditorMode } from '../types';
+import { EditorMode, Selection } from '../types';
 import WysiwygEditor from './WysiwygEditor';
 
 interface EditorProps {
   content: string;
   onContentChange: (content: string) => void;
-  onSelectionChange: (selectedText: string) => void;
+  onSelectionChange: (selection: Selection | null) => void;
   theme: 'light' | 'dark';
   editorMode: EditorMode;
   onEditorModeChange: (mode: EditorMode) => void;
+  pendingReplacement: { text: string; selection: Selection } | null;
+  onReplacementApplied: () => void;
 }
 
 const isRtlText = (text: string): boolean => {
@@ -34,16 +36,29 @@ const Editor: React.FC<EditorProps> = ({
   theme,
   editorMode,
   onEditorModeChange,
+  pendingReplacement,
+  onReplacementApplied,
 }) => {
   const isRtl = useMemo(() => isRtlText(content), [content]);
 
+  useEffect(() => {
+    if (pendingReplacement && pendingReplacement.selection.mode === 'source') {
+      const { text, selection } = pendingReplacement;
+      const newContent = content.substring(0, selection.from) + text + content.substring(selection.to);
+      onContentChange(newContent);
+      onReplacementApplied();
+    }
+  }, [pendingReplacement, content, onContentChange, onReplacementApplied]);
+
   const handleUpdate = useCallback((update: ViewUpdate) => {
     if (update.selectionSet) {
-      const selected = update.state.sliceDoc(
-        update.state.selection.main.from,
-        update.state.selection.main.to
-      );
-      onSelectionChange(selected);
+      const { from, to } = update.state.selection.main;
+      const text = update.state.sliceDoc(from, to);
+      if (text) {
+        onSelectionChange({ from, to, text, mode: 'source' });
+      } else {
+        onSelectionChange(null);
+      }
     }
   }, [onSelectionChange]);
 
@@ -142,6 +157,8 @@ const Editor: React.FC<EditorProps> = ({
             onContentChange={onContentChange}
             onSelectionChange={onSelectionChange}
             isRtl={isRtl}
+            pendingReplacement={pendingReplacement}
+            onReplacementApplied={onReplacementApplied}
           />
         )}
     </div>

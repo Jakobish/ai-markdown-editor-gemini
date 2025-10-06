@@ -1,14 +1,18 @@
+
 import React, { useEffect } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { Markdown } from '@tiptap/extension-markdown';
 import WysiwygToolbar from './WysiwygToolbar';
+import { Selection } from '../types';
 
 interface WysiwygEditorProps {
   content: string;
   onContentChange: (content: string) => void;
-  onSelectionChange: (selectedText: string) => void;
+  onSelectionChange: (selection: Selection | null) => void;
   isRtl: boolean;
+  pendingReplacement: { text: string; selection: Selection } | null;
+  onReplacementApplied: () => void;
 }
 
 const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
@@ -16,6 +20,8 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
   onContentChange,
   onSelectionChange,
   isRtl,
+  pendingReplacement,
+  onReplacementApplied
 }) => {
   const editor = useEditor({
     extensions: [
@@ -36,8 +42,12 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
     },
     onSelectionUpdate: ({ editor }) => {
       const { from, to } = editor.state.selection;
-      const selectedText = editor.state.doc.textBetween(from, to, '');
-      onSelectionChange(selectedText);
+      const text = editor.state.doc.textBetween(from, to, '');
+      if (text) {
+        onSelectionChange({ from, to, text, mode: 'wysiwyg' });
+      } else {
+        onSelectionChange(null);
+      }
     },
     editorProps: {
       attributes: {
@@ -47,13 +57,28 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
   });
 
   useEffect(() => {
+    if (editor && pendingReplacement && pendingReplacement.selection.mode === 'wysiwyg') {
+      const { text, selection } = pendingReplacement;
+      // Use transaction to chain commands. focus() is not needed here.
+      editor.chain()
+        .setTextSelection({ from: selection.from, to: selection.to })
+        .insertContent(text)
+        .run();
+      
+      // onUpdate will be triggered by the command, which calls onContentChange.
+      // We then clear the pending state.
+      onReplacementApplied();
+    }
+  }, [pendingReplacement, editor, onReplacementApplied]);
+
+  useEffect(() => {
     if (editor && editor.isReady) {
         // This is a workaround to update content when the file is switched.
         // `setContent` replaces the document, which is what we want.
         // Comparing strings avoids an infinite loop.
         const currentMarkdown = editor.storage.markdown.getMarkdown();
         if (currentMarkdown !== content) {
-            editor.commands.setContent(content);
+            editor.commands.setContent(content, false, { preserveWhitespace: 'full' });
         }
     }
   }, [content, editor]);

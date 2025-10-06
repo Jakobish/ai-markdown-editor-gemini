@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
-import { File, EditorMode } from './types';
+import { File, EditorMode, Selection } from './types';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { DEFAULT_FILE_CONTENT, LOCAL_STORAGE_FILES_KEY } from './constants';
 import Header from './components/Header';
@@ -12,9 +13,10 @@ const App: React.FC = () => {
   const [theme, setTheme] = useLocalStorage<'light' | 'dark'>('theme', 'dark');
   const [files, setFiles] = useLocalStorage<File[]>(LOCAL_STORAGE_FILES_KEY, []);
   const [activeFileId, setActiveFileId] = useState<string | null>(null);
-  const [selectedText, setSelectedText] = useState<string>('');
+  const [selection, setSelection] = useState<Selection | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [editorMode, setEditorMode] = useState<EditorMode>('source');
+  const [pendingReplacement, setPendingReplacement] = useState<{ text: string; selection: Selection } | null>(null);
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
@@ -52,9 +54,10 @@ const App: React.FC = () => {
   };
 
   const handleDeleteFile = (id: string) => {
-    setFiles(files.filter((f) => f.id !== id));
+    const remainingFiles = files.filter((f) => f.id !== id);
+    setFiles(remainingFiles);
     if (activeFileId === id) {
-      setActiveFileId(files.length > 1 ? files.filter(f => f.id !== id)[0].id : null);
+      setActiveFileId(remainingFiles.length > 0 ? remainingFiles[0].id : null);
     }
   };
 
@@ -73,11 +76,9 @@ const App: React.FC = () => {
   }, [activeFileId, setFiles]);
 
   const handleApplyAiEdit = (newText: string) => {
-    if (!activeFile || !selectedText) return;
-
-    // A simple replacement for now. A more advanced implementation would use ranges.
-    const newContent = activeFile.content.replace(selectedText, newText);
-    handleContentChange(newContent);
+    if (!activeFile || !selection) return;
+    setPendingReplacement({ text: newText, selection });
+    setSelection(null);
   };
 
   const handleExport = () => {
@@ -93,6 +94,12 @@ const App: React.FC = () => {
           URL.revokeObjectURL(url);
       }
   };
+  
+  const handleSelectionChange = (newSelection: Selection | null) => {
+    // Prevent applying edits if selection has changed
+    if (pendingReplacement) return;
+    setSelection(newSelection);
+  }
 
   return (
     <div className="h-screen w-screen flex flex-col bg-gray-950 text-white font-sans">
@@ -118,10 +125,12 @@ const App: React.FC = () => {
               key={activeFile.id}
               content={activeFile.content}
               onContentChange={handleContentChange}
-              onSelectionChange={setSelectedText}
+              onSelectionChange={handleSelectionChange}
               theme={theme}
               editorMode={editorMode}
               onEditorModeChange={setEditorMode}
+              pendingReplacement={pendingReplacement}
+              onReplacementApplied={() => setPendingReplacement(null)}
             />
           ) : (
             <div className="flex-1 flex items-center justify-center text-gray-500">
@@ -130,7 +139,7 @@ const App: React.FC = () => {
           )}
         </main>
         <AiAssistant 
-          selectedText={selectedText}
+          selection={selection}
           onApplyEdit={handleApplyAiEdit}
           onShowSettings={() => setIsSettingsOpen(true)}
         />
