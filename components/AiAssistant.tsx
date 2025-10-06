@@ -56,7 +56,7 @@ const AiAssistant: React.FC<AiAssistantProps> = ({
     } catch (error) {
       const errorMessage: ChatMessage = {
         role: 'system',
-        content: error instanceof Error ? error.message : 'An unknown error occurred.',
+        content: "An error occurred while communicating with the AI. Please check the console for details.",
       };
       setMessages((prev) => [...prev, errorMessage]);
     } finally {

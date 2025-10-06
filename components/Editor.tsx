@@ -99,9 +99,9 @@ const Editor: React.FC<EditorProps> = ({
             components={{
               // FIX: Add `any` type to props to fix type error on `inline` property.
               // This is a workaround for a potential type definition issue with react-markdown.
-              code({node, className, children, ...props}: any) {
+              code({node, inline, className, children, ...props}: any) {
                 const match = /language-(\w+)/.exec(className || '')
-                return !props.inline && match ? (
+                return !inline && match ? (
                   <div className="bg-gray-800 rounded-md my-4">
                     <div className="bg-gray-700 text-gray-300 px-4 py-1 text-xs rounded-t-md">{match[1]}</div>
                     <pre className="p-4 overflow-x-auto text-sm"><code className={className} {...props}>

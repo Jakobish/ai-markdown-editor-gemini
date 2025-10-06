@@ -20,7 +20,7 @@ export async function generateContentWithAi(
   prompt: string
 ): Promise<string> {
   if (initError || !ai) {
-    return `Error: AI service is not available. ${initError || ''}`.trim();
+    throw new Error(`AI service is not available. ${initError || ''}`.trim());
   }
   
   try {
@@ -31,10 +31,9 @@ export async function generateContentWithAi(
     
     return response.text;
   } catch (error) {
+    // Log the detailed error for debugging.
     console.error("Error calling Gemini API:", error);
-    if (error instanceof Error) {
-        return `Error: ${error.message}`;
-    }
-    return "An unknown error occurred while contacting the AI.";
+    // Re-throw the error to be handled by the UI layer, which will show a user-friendly message.
+    throw error;
   }
 }
