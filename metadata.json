@@ -1,0 +1,5 @@
+{
+  "name": "AI Markdown Editor",
+  "description": "A browser-based Markdown editor with an integrated AI chat panel that allows a user to discuss and modify the document directly using Google Gemini.",
+  "requestFramePermissions": []
+}
