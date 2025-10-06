@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { SettingsIcon, SunIcon, MoonIcon, DownloadIcon } from './icons';
+import { SettingsIcon, SunIcon, MoonIcon, DownloadIcon, UndoIcon, RedoIcon } from './icons';
 import { useAppContext } from '../context/AppContext';
 
 interface HeaderProps {
@@ -9,7 +8,7 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ onShowSettings, onExport }) => {
-  const { theme, toggleTheme, activeFile } = useAppContext();
+  const { theme, toggleTheme, activeFile, undo, redo, canUndo, canRedo } = useAppContext();
 
   return (
     <div className="h-14 bg-gray-900 border-b border-gray-800 flex items-center justify-between px-4 text-gray-300">
@@ -22,10 +21,17 @@ const Header: React.FC<HeaderProps> = ({ onShowSettings, onExport }) => {
         <span className="font-semibold text-white">AI Markdown Editor /</span>
         <span className="ml-2 text-gray-400">{activeFile?.name || 'No file selected'}</span>
       </div>
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center space-x-2">
          <div className="text-sm text-gray-400">
             Saved to browser
         </div>
+        <button onClick={undo} disabled={!canUndo} className="p-2 rounded-md hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed" aria-label="Undo">
+            <UndoIcon className="w-5 h-5" />
+        </button>
+        <button onClick={redo} disabled={!canRedo} className="p-2 rounded-md hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed" aria-label="Redo">
+            <RedoIcon className="w-5 h-5" />
+        </button>
+        <div className="h-6 w-px bg-gray-700 mx-1"></div>
         <button onClick={onExport} className="p-2 rounded-md hover:bg-gray-800" aria-label="Export file">
           <DownloadIcon className="w-5 h-5" />
         </button>

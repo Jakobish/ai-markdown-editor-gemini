@@ -1,5 +1,4 @@
-
-import React, { useCallback, useMemo, useEffect } from 'react';
+import React, { useCallback, useMemo, useEffect, useState } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
 import type { ViewUpdate } from '@codemirror/view';
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
@@ -19,6 +18,7 @@ interface SourceEditorProps {
   isRtl: boolean;
   pendingReplacement: { text: string; selection: Selection } | null;
   onReplacementApplied: () => void;
+  onContextMenu: (event: React.MouseEvent, selection: Selection | null) => void;
 }
 
 const SourceEditor: React.FC<SourceEditorProps> = ({
@@ -28,8 +28,10 @@ const SourceEditor: React.FC<SourceEditorProps> = ({
   isRtl,
   pendingReplacement,
   onReplacementApplied,
+  onContextMenu,
 }) => {
   const { theme } = useAppContext();
+  const [currentSelection, setCurrentSelection] = useState<Selection | null>(null);
 
   useEffect(() => {
     if (pendingReplacement && pendingReplacement.selection.mode === 'source') {
@@ -44,11 +46,9 @@ const SourceEditor: React.FC<SourceEditorProps> = ({
     if (update.selectionSet) {
       const { from, to } = update.state.selection.main;
       const text = update.state.sliceDoc(from, to);
-      if (text) {
-        onSelectionChange({ from, to, text, mode: 'source' });
-      } else {
-        onSelectionChange(null);
-      }
+      const newSelection = text ? { from, to, text, mode: 'source' as 'source' } : null;
+      onSelectionChange(newSelection);
+      setCurrentSelection(newSelection);
     }
   }, [onSelectionChange]);
 
@@ -60,8 +60,6 @@ const SourceEditor: React.FC<SourceEditorProps> = ({
   const editorTheme = theme === 'dark' ? darcula : bbedit;
   
   const markdownComponents: Components = useMemo(() => ({
-    // FIX: Add 'any' type to props to resolve TypeScript error on 'inline' property.
-    // The 'inline' property is provided by react-markdown, but its type might not be correctly inferred.
     code({ node, inline, className, children, ...props }: any) {
       const match = /language-(\w+)/.exec(className || '')
       return !inline && match ? (
@@ -83,7 +81,7 @@ const SourceEditor: React.FC<SourceEditorProps> = ({
   }), []);
 
   return (
-    <div className="flex-1 grid grid-cols-1 md:grid-cols-2 h-full overflow-hidden">
+    <div className="flex-1 grid grid-cols-1 md:grid-cols-2 h-full overflow-hidden" onContextMenu={(e) => onContextMenu(e, currentSelection)}>
       <div className="h-full flex flex-col overflow-hidden">
         <CodeMirror
           value={content}

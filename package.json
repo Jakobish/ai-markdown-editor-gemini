@@ -27,7 +27,8 @@
     "prosemirror-state": "1.4.3",
     "prosemirror-view": "1.33.6",
     "prosemirror-model": "1.22.0",
-    "prosemirror-transform": "1.8.0"
+    "prosemirror-transform": "1.8.0",
+    "@tiptap/core": "^3.6.5"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

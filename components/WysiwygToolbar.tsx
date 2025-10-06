@@ -1,5 +1,7 @@
+
 import React from 'react';
-import type { Editor } from '@tiptap/react';
+// FIX: The `Editor` type should be imported from `@tiptap/core`, not `@tiptap/react`.
+import type { Editor } from '@tiptap/core';
 import {
   BoldIcon, ItalicIcon, StrikethroughIcon, CodeIcon,
   Heading1Icon, Heading2Icon, Heading3Icon,

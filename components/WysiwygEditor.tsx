@@ -1,5 +1,4 @@
-
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { Markdown } from '@tiptap/extension-markdown';
@@ -13,6 +12,7 @@ interface WysiwygEditorProps {
   isRtl: boolean;
   pendingReplacement: { text: string; selection: Selection } | null;
   onReplacementApplied: () => void;
+  onContextMenu: (event: React.MouseEvent, selection: Selection | null) => void;
 }
 
 const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
@@ -21,8 +21,11 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
   onSelectionChange,
   isRtl,
   pendingReplacement,
-  onReplacementApplied
+  onReplacementApplied,
+  onContextMenu,
 }) => {
+  const [currentSelection, setCurrentSelection] = useState<Selection | null>(null);
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -43,11 +46,9 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
     onSelectionUpdate: ({ editor }) => {
       const { from, to } = editor.state.selection;
       const text = editor.state.doc.textBetween(from, to, '');
-      if (text) {
-        onSelectionChange({ from, to, text, mode: 'wysiwyg' });
-      } else {
-        onSelectionChange(null);
-      }
+      const newSelection = text ? { from, to, text, mode: 'wysiwyg' as 'wysiwyg' } : null;
+      onSelectionChange(newSelection);
+      setCurrentSelection(newSelection);
     },
     editorProps: {
       attributes: {
@@ -59,23 +60,16 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
   useEffect(() => {
     if (editor && pendingReplacement && pendingReplacement.selection.mode === 'wysiwyg') {
       const { text, selection } = pendingReplacement;
-      // Use transaction to chain commands. focus() is not needed here.
       editor.chain()
         .setTextSelection({ from: selection.from, to: selection.to })
         .insertContent(text)
         .run();
-      
-      // onUpdate will be triggered by the command, which calls onContentChange.
-      // We then clear the pending state.
       onReplacementApplied();
     }
   }, [pendingReplacement, editor, onReplacementApplied]);
 
   useEffect(() => {
-    if (editor && editor.isReady) {
-        // This is a workaround to update content when the file is switched.
-        // `setContent` replaces the document, which is what we want.
-        // Comparing strings avoids an infinite loop.
+    if (editor?.isReady) {
         const currentMarkdown = editor.storage.markdown.getMarkdown();
         if (currentMarkdown !== content) {
             editor.commands.setContent(content, false, { preserveWhitespace: 'full' });
@@ -84,7 +78,7 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
   }, [content, editor]);
 
   return (
-    <div className="flex flex-col h-full bg-gray-950 overflow-hidden" dir={isRtl ? 'rtl' : 'ltr'}>
+    <div className="flex flex-col h-full bg-gray-950 overflow-hidden" dir={isRtl ? 'rtl' : 'ltr'} onContextMenu={(e) => onContextMenu(e, currentSelection)}>
       <WysiwygToolbar editor={editor} />
       <div className="flex-1 overflow-y-auto">
         <EditorContent editor={editor} />

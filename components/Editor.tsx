@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Selection } from '../types';
 import { useAppContext } from '../context/AppContext';
@@ -8,8 +7,7 @@ import ModeToggle from './ModeToggle';
 
 interface EditorProps {
   onSelectionChange: (selection: Selection | null) => void;
-  pendingReplacement: { text: string; selection: Selection } | null;
-  onReplacementApplied: () => void;
+  onContextMenu: (event: React.MouseEvent, selection: Selection | null) => void;
 }
 
 const isRtlText = (text: string): boolean => {
@@ -21,10 +19,9 @@ const isRtlText = (text: string): boolean => {
 
 const Editor: React.FC<EditorProps> = ({
   onSelectionChange,
-  pendingReplacement,
-  onReplacementApplied,
+  onContextMenu,
 }) => {
-  const { activeFile, updateActiveFileContent, editorMode } = useAppContext();
+  const { activeFile, updateActiveFileContent, editorMode, pendingReplacement, setPendingReplacement } = useAppContext();
   
   if (!activeFile) {
     return (
@@ -50,7 +47,8 @@ const Editor: React.FC<EditorProps> = ({
             onSelectionChange={onSelectionChange}
             isRtl={isRtl}
             pendingReplacement={pendingReplacement}
-            onReplacementApplied={onReplacementApplied}
+            onReplacementApplied={() => setPendingReplacement(null)}
+            onContextMenu={onContextMenu}
           />
         ) : (
           <WysiwygEditor
@@ -60,7 +58,8 @@ const Editor: React.FC<EditorProps> = ({
             onSelectionChange={onSelectionChange}
             isRtl={isRtl}
             pendingReplacement={pendingReplacement}
-            onReplacementApplied={onReplacementApplied}
+            onReplacementApplied={() => setPendingReplacement(null)}
+            onContextMenu={onContextMenu}
           />
         )}
     </div>

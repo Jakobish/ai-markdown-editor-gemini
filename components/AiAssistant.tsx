@@ -1,24 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ChatMessage, Selection } from '../types';
-import { generateContentWithAi } from '../services/geminiService';
+import { Selection } from '../types';
 import { SendIcon, SparklesIcon } from './icons';
+import { useAiContext } from '../context/AiContext';
+import { useAppContext } from '../context/AppContext';
 
 interface AiAssistantProps {
   selection: Selection | null;
   onApplyEdit: (newText: string, selection: Selection) => void;
-  onShowSettings: () => void;
 }
 
 const AiAssistant: React.FC<AiAssistantProps> = ({
   selection,
   onApplyEdit,
-  onShowSettings,
 }) => {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [lastAiEdit, setLastAiEdit] = useState<{ text: string, selection: Selection } | null>(null);
-
+  const { messages, isLoading, lastAiEdit, sendAiRequest, setLastAiEdit } = useAiContext();
+  const { setPendingReplacement } = useAppContext();
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -27,42 +25,18 @@ const AiAssistant: React.FC<AiAssistantProps> = ({
 
   useEffect(scrollToBottom, [messages]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (isLoading || !input.trim()) return;
-    
-    // Capture selection at the time of request for stable replacements
-    const currentSelection = selection;
-    const isEditRequest = !!currentSelection;
-
-    const userMessage: ChatMessage = { role: 'user', content: input };
-    setMessages((prev) => [...prev, userMessage]);
+    sendAiRequest(input, selection);
     setInput('');
-    setIsLoading(true);
-    setLastAiEdit(null); // Clear previous edit suggestion
-
-    const prompt = currentSelection
-      ? `You are a markdown editing assistant. The user has selected the following text from their document:\n\n---\n${currentSelection.text}\n---\n\nPlease apply the following instruction: "${input}"\n\nReturn only the modified markdown text, without any explanation, preamble, or markdown block syntax.`
-      : input;
-
-    try {
-      const response = await generateContentWithAi(prompt);
-      const modelMessage: ChatMessage = { role: 'model', content: response };
-      setMessages((prev) => [...prev, modelMessage]);
-      if (isEditRequest && currentSelection) {
-        // Associate the AI response with the specific selection it was for
-        setLastAiEdit({ text: response, selection: currentSelection });
-      }
-    } catch (error) {
-      const errorMessage: ChatMessage = {
-        role: 'system',
-        content: "An error occurred while communicating with the AI. Please check the console for details.",
-      };
-      setMessages((prev) => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
-    }
   };
+  
+  const handleApply = () => {
+      if(lastAiEdit) {
+        setPendingReplacement(lastAiEdit);
+        setLastAiEdit(null);
+      }
+  }
 
   return (
     <div className="w-80 bg-gray-900 flex flex-col h-full border-l border-gray-800">
@@ -115,10 +89,7 @@ const AiAssistant: React.FC<AiAssistantProps> = ({
       {lastAiEdit && (
         <div className="p-4 border-t border-gray-800">
             <button
-                onClick={() => {
-                    onApplyEdit(lastAiEdit.text, lastAiEdit.selection);
-                    setLastAiEdit(null);
-                }}
+                onClick={handleApply}
                 className="w-full bg-green-600 hover:bg-green-700 text-white text-sm font-semibold py-2 px-4 rounded-md transition-colors"
             >
                 Apply to Document
