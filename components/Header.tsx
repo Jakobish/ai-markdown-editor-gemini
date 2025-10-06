@@ -1,15 +1,16 @@
+
 import React from 'react';
 import { SettingsIcon, SunIcon, MoonIcon, DownloadIcon } from './icons';
+import { useAppContext } from '../context/AppContext';
 
 interface HeaderProps {
-  theme: 'light' | 'dark';
-  onToggleTheme: () => void;
   onShowSettings: () => void;
   onExport: () => void;
-  activeFileName: string;
 }
 
-const Header: React.FC<HeaderProps> = ({ theme, onToggleTheme, onShowSettings, onExport, activeFileName }) => {
+const Header: React.FC<HeaderProps> = ({ onShowSettings, onExport }) => {
+  const { theme, toggleTheme, activeFile } = useAppContext();
+
   return (
     <div className="h-14 bg-gray-900 border-b border-gray-800 flex items-center justify-between px-4 text-gray-300">
       <div className="flex items-center">
@@ -19,7 +20,7 @@ const Header: React.FC<HeaderProps> = ({ theme, onToggleTheme, onShowSettings, o
           <path d="M2 12L12 17L22 12" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
         <span className="font-semibold text-white">AI Markdown Editor /</span>
-        <span className="ml-2 text-gray-400">{activeFileName}</span>
+        <span className="ml-2 text-gray-400">{activeFile?.name || 'No file selected'}</span>
       </div>
       <div className="flex items-center space-x-4">
          <div className="text-sm text-gray-400">
@@ -28,7 +29,7 @@ const Header: React.FC<HeaderProps> = ({ theme, onToggleTheme, onShowSettings, o
         <button onClick={onExport} className="p-2 rounded-md hover:bg-gray-800" aria-label="Export file">
           <DownloadIcon className="w-5 h-5" />
         </button>
-        <button onClick={onToggleTheme} className="p-2 rounded-md hover:bg-gray-800" aria-label="Toggle theme">
+        <button onClick={toggleTheme} className="p-2 rounded-md hover:bg-gray-800" aria-label="Toggle theme">
           {theme === 'dark' ? <SunIcon className="w-5 h-5" /> : <MoonIcon className="w-5 h-5" />}
         </button>
         <button onClick={onShowSettings} className="p-2 rounded-md hover:bg-gray-800" aria-label="Settings">

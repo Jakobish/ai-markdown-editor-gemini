@@ -2,24 +2,18 @@
 import React, { useState } from 'react';
 import { File } from '../types';
 import { FileIcon, PlusIcon, TrashIcon, EditIcon, CheckIcon, XIcon } from './icons';
+import { useAppContext } from '../context/AppContext';
 
-interface FileBrowserProps {
-  files: File[];
-  activeFileId: string | null;
-  onSelectFile: (id: string) => void;
-  onAddFile: () => void;
-  onDeleteFile: (id: string) => void;
-  onRenameFile: (id: string, newName: string) => void;
-}
+const FileBrowser: React.FC = () => {
+  const { 
+    files, 
+    activeFileId, 
+    setActiveFileId, 
+    addFile, 
+    deleteFile, 
+    renameFile 
+  } = useAppContext();
 
-const FileBrowser: React.FC<FileBrowserProps> = ({
-  files,
-  activeFileId,
-  onSelectFile,
-  onAddFile,
-  onDeleteFile,
-  onRenameFile,
-}) => {
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
 
@@ -30,7 +24,7 @@ const FileBrowser: React.FC<FileBrowserProps> = ({
 
   const handleRenameSubmit = (fileId: string) => {
     if (renameValue.trim()) {
-      onRenameFile(fileId, renameValue.trim());
+      renameFile(fileId, renameValue.trim());
     }
     setRenamingId(null);
   };
@@ -48,7 +42,7 @@ const FileBrowser: React.FC<FileBrowserProps> = ({
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-sm font-bold tracking-wider uppercase text-gray-400">Files</h2>
         <button
-          onClick={onAddFile}
+          onClick={addFile}
           className="p-1 text-gray-400 hover:text-white hover:bg-gray-700 rounded-md"
           aria-label="New file"
         >
@@ -81,7 +75,7 @@ const FileBrowser: React.FC<FileBrowserProps> = ({
                 </div>
               ) : (
                 <>
-                  <div className="flex items-center truncate flex-grow" onClick={() => onSelectFile(file.id)}>
+                  <div className="flex items-center truncate flex-grow" onClick={() => setActiveFileId(file.id)}>
                     <FileIcon className="w-4 h-4 mr-2 flex-shrink-0" />
                     <span className="truncate text-sm">{file.name}</span>
                   </div>
@@ -94,7 +88,7 @@ const FileBrowser: React.FC<FileBrowserProps> = ({
                       <EditIcon className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => onDeleteFile(file.id)}
+                      onClick={() => deleteFile(file.id)}
                       className="p-1 text-gray-400 hover:text-red-400"
                       aria-label="Delete file"
                     >
